@@ -52,14 +52,18 @@ def is_king_captured(chessboard, color):
     return True
 
 # Hàm vẽ bàn cờ và quân cờ với khả năng bỏ qua quân cờ đang di chuyển
-def draw_board(chessboard, selected=None, possible_moves=None, moving_piece_pos=None):
+def draw_board(chessboard, selected=None, possible_moves=None, moving_piece_pos=None, additional_moving_pos=None):
     for row in range(8):
         for col in range(8):
             color = WHITE if (row + col) % 2 == 0 else GRAY
             pygame.draw.rect(screen, color, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
             piece = chessboard.chesspieces[col][row]
-            # Bỏ qua vẽ quân cờ nếu nó đang di chuyển
-            if piece != 0 and (moving_piece_pos is None or (col != moving_piece_pos[0] or row != moving_piece_pos[1])):
+            # Bỏ qua vẽ quân cờ nếu nó đang di chuyển (vua hoặc xe)
+            if piece != 0:
+                # Kiểm tra xem ô này có phải là vị trí đang di chuyển không
+                if (moving_piece_pos and col == moving_piece_pos[0] and row == moving_piece_pos[1]) or \
+                   (additional_moving_pos and col == additional_moving_pos[0] and row == additional_moving_pos[1]):
+                    continue  # Bỏ qua ô này nếu là vị trí của vua hoặc xe đang di chuyển
                 key = piece.color + piece.piece_type
                 screen.blit(piece_images[key], (col * SQUARE_SIZE, row * SQUARE_SIZE))
     
@@ -77,26 +81,54 @@ def animate_move(chessboard, move, piece):
     x_start, y_start = move.xfrom * SQUARE_SIZE, move.yfrom * SQUARE_SIZE
     x_end, y_end = move.xto * SQUARE_SIZE, move.yto * SQUARE_SIZE
 
+    # Kiểm tra bắt qua đường
+    is_en_passant = (piece.piece_type == 'P' and move.xto != move.xfrom and 
+                     chessboard.get_piece(move.xto, move.yto) == 0)
+    captured_piece_pos = None
+    if is_en_passant:
+        captured_piece_pos = (move.xto, move.yfrom)  # Vị trí quân tốt bị bắt
+
+    # Kiểm tra nhập thành
+    is_castling = piece.piece_type == 'K' and abs(move.xto - move.xfrom) == 2
+    rook_image = rook_x_start = rook_y_start = rook_x_end = rook_y_end = rook_pos = None
+
+    if is_castling:
+        if move.xto > move.xfrom:
+            rook = chessboard.get_piece(move.xto + 1, move.yfrom)
+            rook_x_start = (move.xto + 1) * SQUARE_SIZE
+            rook_x_end = (move.xto - 1) * SQUARE_SIZE
+            rook_pos = (move.xto + 1, move.yfrom)
+        else:
+            rook = chessboard.get_piece(move.xto - 2, move.yfrom)
+            rook_x_start = (move.xto - 2) * SQUARE_SIZE
+            rook_x_end = (move.xto + 1) * SQUARE_SIZE
+            rook_pos = (move.xto - 2, move.yfrom)
+        rook_y_start = rook_y_end = move.yfrom * SQUARE_SIZE
+        rook_image = piece_images[rook.color + rook.piece_type]
+
     for i in range(frames + 1):
         t = i / frames
-        eased_t = t * t * (3 - 2 * t)  # Ease in-out
-
+        eased_t = t * t * (3 - 2 * t)
         x = x_start + (x_end - x_start) * eased_t
         y = y_start + (y_end - y_start) * eased_t
 
         screen.fill(BLACK)
-        # Không vẽ quân cờ ở vị trí ban đầu trong quá trình di chuyển
-        draw_board(chessboard, moving_piece_pos=(move.xfrom, move.yfrom))
-        screen.blit(piece_image, (x, y))  # Vẽ quân cờ đang di chuyển
+        if is_castling and rook_pos:
+            draw_board(chessboard, moving_piece_pos=(move.xfrom, move.yfrom), additional_moving_pos=rook_pos)
+        elif is_en_passant and captured_piece_pos:
+            draw_board(chessboard, moving_piece_pos=(move.xfrom, move.yfrom), additional_moving_pos=captured_piece_pos)
+        else:
+            draw_board(chessboard, moving_piece_pos=(move.xfrom, move.yfrom))
+
+        screen.blit(piece_image, (x, y))
+        if is_castling and rook_image:
+            rook_x = rook_x_start + (rook_x_end - rook_x_start) * eased_t
+            screen.blit(rook_image, (rook_x, rook_y_start))
+
         pygame.display.flip()
         clock.tick(FPS)
 
-    # Sau khi animation hoàn tất, thực hiện nước đi
-    try:
-        chessboard.perform_move(move)
-    except Exception as e:
-        print(f"Error in perform_move: {e}")
-        raise
+    chessboard.perform_move(move)
 
 # Hàm main
 def main():
@@ -137,7 +169,7 @@ def main():
                                 if is_king_captured(chessboard, pieces.Piece.BLACK):
                                     print("Checkmate! White wins.")
                                     game_over = True
-                                    break
+                                    break   
 
                                 ai_move = ai.AI.get_ai_move(chessboard, [])
                                 if ai_move == 0:

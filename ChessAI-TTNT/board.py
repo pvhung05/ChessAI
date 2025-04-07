@@ -10,6 +10,7 @@ class Board:
         self.chesspieces = chesspieces
         self.white_king_moved = white_king_moved
         self.black_king_moved = black_king_moved
+        self.en_passant_target = None
 
     @classmethod
     def clone(cls, chessboard):
@@ -17,7 +18,7 @@ class Board:
         for x in range(Board.WIDTH):
             for y in range(Board.HEIGHT):
                 piece = chessboard.chesspieces[x][y]
-                if (piece != 0):
+                if piece != 0:
                     chesspieces[x][y] = piece.clone()
         return cls(chesspieces, chessboard.white_king_moved, chessboard.black_king_moved)
 
@@ -70,26 +71,39 @@ class Board:
         piece = self.chesspieces[move.xfrom][move.yfrom]
         self.move_piece(piece, move.xto, move.yto)
 
-        # If a pawn reaches the end, upgrade it to a queen.
-        if (piece.piece_type == pieces.Pawn.PIECE_TYPE):
-            if (piece.y == 0 or piece.y == Board.HEIGHT-1):
+        # Xử lý bắt qua đường
+        if piece.piece_type == pieces.Pawn.PIECE_TYPE:
+            # Kiểm tra di chuyển 2 ô của tốt
+            if abs(move.yto - move.yfrom) == 2:
+                self.en_passant_target = (move.xfrom, (move.yfrom + move.yto) // 2)
+            # Kiểm tra nước đi bắt qua đường
+            elif (move.xto, move.yto) == self.en_passant_target:
+                # Xóa quân tốt bị bắt
+                captured_y = move.yfrom  # Hàng của quân tốt bị bắt
+                self.chesspieces[move.xto][captured_y] = 0
+            else:
+                self.en_passant_target = None
+        else:
+            self.en_passant_target = None  # Reset nếu không phải nước đi của tốt
+
+        # Phong cấp tốt
+        if piece.piece_type == pieces.Pawn.PIECE_TYPE:
+            if piece.y == 0 or piece.y == Board.HEIGHT - 1:
                 self.chesspieces[piece.x][piece.y] = pieces.Queen(piece.x, piece.y, piece.color)
 
-        if (piece.piece_type == pieces.King.PIECE_TYPE):
-            # Mark the king as having moved.
-            if (piece.color == pieces.Piece.WHITE):
+        # Cập nhật trạng thái vua
+        if piece.piece_type == pieces.King.PIECE_TYPE:
+            if piece.color == pieces.Piece.WHITE:
                 self.white_king_moved = True
             else:
                 self.black_king_moved = True
-            
-            # Check if king-side castling
-            if (move.xto - move.xfrom == 2):
-                rook = self.chesspieces[piece.x+1][piece.y]
-                self.move_piece(rook, piece.x-1, piece.y)
-            # Check if queen-side castling
-            if (move.xto - move.xfrom == -2):
-                rook = self.chesspieces[piece.x-2][piece.y]
-                self.move_piece(rook, piece.x+1, piece.y)
+            # Nhập thành
+            if move.xto - move.xfrom == 2:
+                rook = self.chesspieces[piece.x + 1][piece.y]
+                self.move_piece(rook, piece.x - 1, piece.y)
+            elif move.xto - move.xfrom == -2:
+                rook = self.chesspieces[piece.x - 2][piece.y]
+                self.move_piece(rook, piece.x + 1, piece.y)
     
     def move_piece(self, piece, xto, yto):
         self.chesspieces[piece.x][piece.y] = 0
