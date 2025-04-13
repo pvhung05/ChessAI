@@ -78,13 +78,13 @@ class Board:
                 self.en_passant_target = (move.xfrom, (move.yfrom + move.yto) // 2)
             # Kiểm tra nước đi bắt qua đường
             elif (move.xto, move.yto) == self.en_passant_target:
-                # Xóa quân tốt bị bắt
-                captured_y = move.yfrom  # Hàng của quân tốt bị bắt
-                self.chesspieces[move.xto][captured_y] = 0
+                # Xóa quân tốt bị bắt (nằm ở cùng cột với đích đến, cùng hàng với vị trí ban đầu)
+                captured_pawn_pos = (move.xto, move.yfrom)
+                self.chesspieces[captured_pawn_pos[0]][captured_pawn_pos[1]] = 0
             else:
                 self.en_passant_target = None
         else:
-            self.en_passant_target = None  # Reset nếu không phải nước đi của tốt
+            self.en_passant_target = None
 
         # Phong cấp tốt
         if piece.piece_type == pieces.Pawn.PIECE_TYPE:
