@@ -269,7 +269,6 @@ class King(Piece):
 
 
 class Pawn(Piece):
-
     PIECE_TYPE = "P"
     VALUE = 100
 
@@ -277,35 +276,36 @@ class Pawn(Piece):
         super(Pawn, self).__init__(x, y, color, Pawn.PIECE_TYPE, Pawn.VALUE)
 
     def is_starting_position(self):
-        if (self.color == Piece.BLACK):
-            return self.y == 1
-        else:
-            return self.y == 8 - 2
+        return self.y == 1 if self.color == Piece.BLACK else self.y == 6
 
     def get_possible_moves(self, board):
         moves = []
+        direction = -1 if self.color == Piece.WHITE else 1
 
-        # Direction the pawn can move in.
-        direction = -1
-        if (self.color == Piece.BLACK):
-            direction = 1
-
-        # The general 1 step forward move.
-        if (board.get_piece(self.x, self.y+direction) == 0):
+    # Di chuyển tiến 1 ô
+        if board.get_piece(self.x, self.y + direction) == 0:
             moves.append(self.get_move(board, self.x, self.y + direction))
 
-        # The Pawn can take 2 steps as the first move.
-        if (self.is_starting_position() and board.get_piece(self.x, self.y+ direction) == 0 and board.get_piece(self.x, self.y + direction*2) == 0):
-            moves.append(self.get_move(board, self.x, self.y + direction * 2))
+    # Di chuyển tiến 2 ô từ vị trí ban đầu
+        if self.is_starting_position() and board.get_piece(self.x, self.y + direction) == 0 and board.get_piece(self.x, self.y + 2*direction) == 0:
+            moves.append(self.get_move(board, self.x, self.y + 2*direction))
 
-        # Eating pieces.
-        piece = board.get_piece(self.x + 1, self.y + direction)
-        if (piece != 0):
-            moves.append(self.get_move(board, self.x + 1, self.y + direction))
-
-        piece = board.get_piece(self.x - 1, self.y + direction)
-        if (piece != 0):
-            moves.append(self.get_move(board, self.x - 1, self.y + direction))
+        # Ăn quân chéo (bao gồm cả en passant)
+        for dx in [-1, 1]:
+            x, y = self.x + dx, self.y + direction
+            if board.in_bounds(x, y):
+                piece = board.get_piece(x, y)
+                # Ăn quân bình thường
+                if piece != 0 and piece.color != self.color:
+                    moves.append(self.get_move(board, x, y))
+                # Ăn en passant
+                elif piece == 0 and board.en_passant_target == (x, y):
+                    # Kiểm tra có tốt đối phương ở vị trí en passant không
+                    enemy_pawn_pos = (x, self.y)
+                    enemy_pawn = board.get_piece(*enemy_pawn_pos)
+                    if (enemy_pawn != 0 and enemy_pawn.piece_type == Pawn.PIECE_TYPE and 
+                        enemy_pawn.color != self.color):
+                        moves.append(self.get_move(board, x, y))
 
         return self.remove_null_from_list(moves)
 
