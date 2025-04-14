@@ -1,9 +1,12 @@
+import sys
+
 import pygame
 import board
 import pieces
 import ai
 from move import Move
 import math
+from button import Button
 
 # Khởi tạo Pygame
 pygame.init()
@@ -15,6 +18,13 @@ FPS = 60
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Chess Game")
 clock = pygame.time.Clock()
+
+#Thêm ảnh nền menu
+BG = pygame.image.load("images/chess_menu.png")
+
+def get_font(size):
+    return pygame.font.Font("images/font.ttf", size)
+
 
 # Màu sắc
 YELLOW = (0, 255, 0)
@@ -129,6 +139,28 @@ def animate_move(chessboard, move, piece):
         clock.tick(FPS)
 
     chessboard.perform_move(move)
+def menu():
+    while True:
+        screen.blit(BG, (0, 0))
+        # Lấy vị trí con chuột
+        MENU_MOUSE_POS = pygame.mouse.get_pos()
+        # Xét nút
+        PLAY_BUTTON = Button(image=pygame.image.load("images/game_button.png"), pos=(380,380),
+                             text_input="PLAY", font=get_font(30),base_color="#d7fcd4", hovering_color="White")
+        PLAY_BUTTON.changeColor(MENU_MOUSE_POS)
+        PLAY_BUTTON.update(screen)
+
+        for event in pygame.event.get():
+            if(event.type == pygame.QUIT):
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if(PLAY_BUTTON.checkForInput(MENU_MOUSE_POS)):
+                    main()
+
+        pygame.display.flip()
+        clock.tick(FPS)
+        pygame.display.update()
 
 # Hàm main
 def main():
@@ -204,4 +236,4 @@ def main():
     print("Game ended.")
 
 if __name__ == "__main__":
-    main()
+    menu()

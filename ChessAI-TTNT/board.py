@@ -12,7 +12,7 @@ class Board:
         self.black_king_moved = black_king_moved
         self.en_passant_target = None
 
-    
+    @classmethod
     def clone(cls, chessboard):
         chesspieces = [[0 for x in range(Board.WIDTH)] for y in range(Board.HEIGHT)]
         for x in range(Board.WIDTH):
