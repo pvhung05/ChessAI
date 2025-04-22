@@ -4,6 +4,7 @@ import pieces
 import ai
 from move import Move
 import math
+from test_stock_fish import StockfishAI
 
 # Khởi tạo Pygame
 pygame.init()
@@ -130,6 +131,33 @@ def animate_move(chessboard, move, piece):
 
     chessboard.perform_move(move)
 
+def coordinateMoveConvert(stockfish_move):
+    from_square = stockfish_move[:2]
+    to_square = stockfish_move[2:4]
+
+    print(from_square)
+    print(to_square)
+
+    row = {
+    "a": 0,
+    "b": 1,
+    "c": 2,
+    "d": 3,
+    "e": 4,
+    "f": 5,
+    "g": 6,
+    "h": 7
+    }
+  
+
+    s_x_from = row[from_square[0]]
+    s_y_from = 8 - int(from_square[1])
+    s_x_to = row[to_square[0]]  # Cột (file)
+    s_y_to = 8 - int(to_square[1])  # Hàng (rank)
+
+    return s_x_from, s_y_from, s_x_to, s_y_to
+
+
 # Hàm main
 def main():
     chessboard = board.Board.new()
@@ -137,12 +165,48 @@ def main():
     selected = None
     possible_moves = None
     game_over = False
+    engine_path = "E:/stockfish/stockfish/stockfish-windows-x86-64-avx2.exe"
+    sai = StockfishAI(engine_path)
+    ai_compete = True
 
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN and not game_over:
+            #neu dau voi stockfish
+            elif not game_over and ai_compete:
+                #stockfishmodel
+                #rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w
+                print(chessboard.get_fen('w'))
+                stockfish_move=sai.get_best_move(chessboard.get_fen('w'))
+                print(stockfish_move)
+                s_x_from, s_y_from, s_x_to, s_y_to = coordinateMoveConvert(stockfish_move.uci())
+                moving_piece_stkfish = chessboard.get_piece(s_x_from, s_y_from)
+                print(moving_piece_stkfish)
+                s_move = Move( s_x_from, s_y_from, s_x_to, s_y_to)           
+                animate_move(chessboard, s_move, moving_piece_stkfish)
+                print(f"stockfish move ({s_x_from},{s_y_from}) -> ({s_x_to},{s_y_to})")
+
+                # #our model
+                ai_move = ai.AI.get_ai_move(chessboard, [])
+                if ai_move == 0:
+                    if chessboard.is_check(pieces.Piece.BLACK):
+                        print("Checkmate. White wins.")
+                    else:
+                        print("Stalemate.")
+                    game_over = True
+                else:
+                    moving_piece = chessboard.get_piece(ai_move.xfrom, ai_move.yfrom)
+                    animate_move(chessboard, ai_move, moving_piece)
+                    print("AI move: " + ai_move.to_string())
+                        #in ra chuoi fern may di
+                    print(chessboard.get_fen('b'))
+                if is_king_captured(chessboard, pieces.Piece.WHITE):
+                    print("Checkmate! Black wins.")
+                    game_over = True
+
+            #dau voi nguoi    
+            elif event.type == pygame.MOUSEBUTTONDOWN and not game_over and not ai_compete:
                 x, y = event.pos
                 col, row = x // SQUARE_SIZE, y // SQUARE_SIZE
                 print(f"Clicked at ({col}, {row})")
@@ -170,6 +234,7 @@ def main():
                                     print("Checkmate! White wins.")
                                     game_over = True
                                     break   
+                                print(chessboard.get_fen('b'))
 
                                 ai_move = ai.AI.get_ai_move(chessboard, [])
                                 if ai_move == 0:
@@ -186,6 +251,8 @@ def main():
                                 if is_king_captured(chessboard, pieces.Piece.WHITE):
                                     print("Checkmate! Black wins.")
                                     game_over = True
+                                print(chessboard.get_fen('w'))
+                                
                             except Exception as e:
                                 print(f"Error during move: {e}")
                                 running = False

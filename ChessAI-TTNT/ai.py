@@ -69,7 +69,7 @@ class Heuristics:
         rooks = Heuristics.get_piece_position_score(board, pieces.Rook.PIECE_TYPE, Heuristics.ROOK_TABLE)
         queens = Heuristics.get_piece_position_score(board, pieces.Queen.PIECE_TYPE, Heuristics.QUEEN_TABLE)
 
-        return material + pawns + knights + bishops + rooks + queens
+        return 1.5*material + pawns + knights + bishops + rooks + queens
 
     # Returns the score for the position of the given type of piece.
     # A piece type can for example be: pieces.Pawn.PIECE_TYPE.
