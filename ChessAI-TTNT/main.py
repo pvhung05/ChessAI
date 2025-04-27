@@ -257,7 +257,7 @@ def main():
                                 possible_moves = None
 
                                 if is_king_captured(chessboard, pieces.Piece.BLACK):
-                                    result_text = "BẠN QUÁ KHÔN!!!"
+                                    result_text = "YOU WIN"
                                     print("Checkmate! White wins.")
                                     game_over = True
                                     win_sound.play()
@@ -278,7 +278,7 @@ def main():
                                     print("AI move: " + ai_move.to_string())
 
                                 if is_king_captured(chessboard, pieces.Piece.WHITE):
-                                    result_text = "BẠN QUÁ NGU!!!"
+                                    result_text = "YOU LOSE"
                                     loss_sound.play()
                                     print("Checkmate! Black wins.")
                                     game_over = True
