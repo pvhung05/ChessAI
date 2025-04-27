@@ -117,7 +117,15 @@
       <option name="project" value="LOCAL" />
       <updated>1745728176520</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="okok">
+      <option name="closed" value="true" />
+      <created>1745736088836</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1745736088836</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -140,7 +148,7 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/ChessAI$board.coverage" NAME="board Coverage Results" MODIFIED="1744729525190" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ChessAI-TTNT" />
-    <SUITE FILE_PATH="coverage/ChessAI$main.coverage" NAME="main Coverage Results" MODIFIED="1745735912390" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ChessAI-TTNT" />
+    <SUITE FILE_PATH="coverage/ChessAI$main.coverage" NAME="main Coverage Results" MODIFIED="1745741741919" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ChessAI-TTNT" />
     <SUITE FILE_PATH="coverage/ChessAI$button.coverage" NAME="button Coverage Results" MODIFIED="1745215939647" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ChessAI-TTNT" />
   </component>
 </project>

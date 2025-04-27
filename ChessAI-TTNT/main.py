@@ -150,15 +150,15 @@ def animate_move(chessboard, move, piece):
 
 #Hàm game_over
 def game_over_screen(text):
-    font_big = get_font(60)
+    font_big = get_font(45)
     text_surf = font_big.render(text, True, WHITE)
     text_rect = text_surf.get_rect(center=(WIDTH//2, HEIGHT//2 - 100))
 
     #Tạo nút
     PLAY_AGAIN = Button(image=None, pos = (WIDTH//2, HEIGHT//2 + 20), text_input="PLAY AGAIN",
-                        font = get_font(40), base_color="#d7dcd4", hovering_color="white")
+                        font = get_font(20), base_color="#d7dcd4", hovering_color="white")
     QUIT = Button(image=None, pos = (WIDTH//2, HEIGHT//2 + 100), text_input="QUIT",
-                  font = get_font(40), base_color="#d7dcd4",hovering_color="white")
+                  font = get_font(20), base_color="#d7dcd4",hovering_color="white")
 
     #Vong lap
     while True:
@@ -177,8 +177,10 @@ def game_over_screen(text):
                 sys.exit()
             if(event.type==pygame.MOUSEBUTTONDOWN):
                 if(PLAY_AGAIN.checkForInput(mouse_pos)):
+                    click_sound.play()
                     return True
                 if(QUIT.checkForInput(mouse_pos)):
+                    click_sound.play()
                     return False
         pygame.display.update()
         clock.tick(FPS)
@@ -189,9 +191,15 @@ def menu():
         MENU_MOUSE_POS = pygame.mouse.get_pos()
         # Xét nút
         PLAY_BUTTON = Button(image=pygame.image.load("images/game_button.png"), pos=(395,350),
-                             text_input="PLAY", font=get_font(30),base_color="#d7fcd4", hovering_color="White")
-        PLAY_BUTTON.changeColor(MENU_MOUSE_POS)
-        PLAY_BUTTON.update(screen)
+                             text_input="PLAY", font=get_font(25),base_color="black", hovering_color="White")
+        OPTION_BUTTON = Button(image=pygame.image.load("images/game_button.png"), pos=(395,500),
+                                text_input="OPTION", font=get_font(25),base_color="black", hovering_color="White")
+        QUIT_BUTTON = Button(image=pygame.image.load("images/game_button.png"), pos=(395,650),
+                             text_input="QUIT", font=get_font(25),base_color="black", hovering_color="White")
+
+        for button in [PLAY_BUTTON, OPTION_BUTTON, QUIT_BUTTON]:
+            button.changeColor(MENU_MOUSE_POS)
+            button.update(screen)
 
         for event in pygame.event.get():
             if(event.type == pygame.QUIT):
@@ -201,6 +209,10 @@ def menu():
                 if(PLAY_BUTTON.checkForInput(MENU_MOUSE_POS)):
                     click_sound.play()
                     main()
+                if(QUIT_BUTTON.checkForInput(MENU_MOUSE_POS)):
+                    click_sound.play()
+                    pygame.quit()
+                    sys.exit()
 
         pygame.display.flip()
         clock.tick(FPS)
