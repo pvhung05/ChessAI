@@ -10,6 +10,14 @@ from button import Button
 
 # Khởi tạo Pygame
 pygame.init()
+pygame.mixer.init()
+
+#Tải âm thanh
+move_sound = pygame.mixer.Sound("sound/standard/move-self.mp3")
+check_sound = pygame.mixer.Sound("sound/standard/move-check.mp3")
+loss_sound = pygame.mixer.Sound("sound/standard/game-lose-long.mp3")
+win_sound = pygame.mixer.Sound("sound/standard/game-win-long.mp3")
+click_sound = pygame.mixer.Sound("sound/standard/click.mp3")
 
 # Thiết lập cửa sổ
 WIDTH, HEIGHT = 800, 800
@@ -139,13 +147,48 @@ def animate_move(chessboard, move, piece):
         clock.tick(FPS)
 
     chessboard.perform_move(move)
+
+#Hàm game_over
+def game_over_screen(text):
+    font_big = get_font(60)
+    text_surf = font_big.render(text, True, WHITE)
+    text_rect = text_surf.get_rect(center=(WIDTH//2, HEIGHT//2 - 100))
+
+    #Tạo nút
+    PLAY_AGAIN = Button(image=None, pos = (WIDTH//2, HEIGHT//2 + 20), text_input="PLAY AGAIN",
+                        font = get_font(40), base_color="#d7dcd4", hovering_color="white")
+    QUIT = Button(image=None, pos = (WIDTH//2, HEIGHT//2 + 100), text_input="QUIT",
+                  font = get_font(40), base_color="#d7dcd4",hovering_color="white")
+
+    #Vong lap
+    while True:
+        screen.fill(BLACK)
+        screen.blit(text_surf, text_rect)
+
+        mouse_pos = pygame.mouse.get_pos()
+
+        for btn in (PLAY_AGAIN, QUIT):
+            btn.changeColor(mouse_pos)
+            btn.update(screen)
+
+        for event in pygame.event.get():
+            if(event.type == QUIT):
+                pygame.quit()
+                sys.exit()
+            if(event.type==pygame.MOUSEBUTTONDOWN):
+                if(PLAY_AGAIN.checkForInput(mouse_pos)):
+                    return True
+                if(QUIT.checkForInput(mouse_pos)):
+                    return False
+        pygame.display.update()
+        clock.tick(FPS)
 def menu():
     while True:
         screen.blit(BG, (0, 0))
         # Lấy vị trí con chuột
         MENU_MOUSE_POS = pygame.mouse.get_pos()
         # Xét nút
-        PLAY_BUTTON = Button(image=pygame.image.load("images/game_button.png"), pos=(380,380),
+        PLAY_BUTTON = Button(image=pygame.image.load("images/game_button.png"), pos=(395,350),
                              text_input="PLAY", font=get_font(30),base_color="#d7fcd4", hovering_color="White")
         PLAY_BUTTON.changeColor(MENU_MOUSE_POS)
         PLAY_BUTTON.update(screen)
@@ -156,6 +199,7 @@ def menu():
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if(PLAY_BUTTON.checkForInput(MENU_MOUSE_POS)):
+                    click_sound.play()
                     main()
 
         pygame.display.flip()
@@ -169,6 +213,7 @@ def main():
     selected = None
     possible_moves = None
     game_over = False
+    result_text = ""
 
     while running:
         for event in pygame.event.get():
@@ -194,13 +239,16 @@ def main():
                             moving_piece = chessboard.get_piece(selected[0], selected[1])
                             try:
                                 animate_move(chessboard, move, moving_piece)
+                                move_sound.play()
                                 print("User move: " + move.to_string())
                                 selected = None
                                 possible_moves = None
 
                                 if is_king_captured(chessboard, pieces.Piece.BLACK):
+                                    result_text = "BẠN QUÁ KHÔN!!!"
                                     print("Checkmate! White wins.")
                                     game_over = True
+                                    win_sound.play()
                                     break   
 
                                 ai_move = ai.AI.get_ai_move(chessboard, [])
@@ -210,12 +258,16 @@ def main():
                                     else:
                                         print("Stalemate.")
                                     game_over = True
+                                    win_sound.play()
                                 else:
                                     moving_piece = chessboard.get_piece(ai_move.xfrom, ai_move.yfrom)
                                     animate_move(chessboard, ai_move, moving_piece)
+                                    move_sound.play()
                                     print("AI move: " + ai_move.to_string())
 
                                 if is_king_captured(chessboard, pieces.Piece.WHITE):
+                                    result_text = "BẠN QUÁ NGU!!!"
+                                    loss_sound.play()
                                     print("Checkmate! Black wins.")
                                     game_over = True
                             except Exception as e:
@@ -226,7 +278,12 @@ def main():
                         print("Invalid move, resetting selection.")
                         selected = None
                         possible_moves = None
-
+            if(game_over):
+                should_restart = game_over_screen(result_text)
+                if (should_restart == True):
+                    main()
+                elif (should_restart == False):
+                    menu()
         screen.fill(BLACK)
         draw_board(chessboard, selected, possible_moves)
         pygame.display.flip()
