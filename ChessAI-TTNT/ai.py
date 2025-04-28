@@ -112,30 +112,41 @@ class AI:
 
     @staticmethod
     def get_ai_move(chessboard, invalid_moves):
-        best_move = 0
+        possible_moves = chessboard.get_possible_moves(pieces.Piece.BLACK)
+        
+        # Sắp xếp nước đi theo heuristic (ăn quân, chiếu tướng ưu tiên trước)
+        possible_moves.sort(key=lambda move: (
+            -1 if move.captured_piece else 0,  # Ưu tiên nước ăn quân
+            -1 if chessboard.is_check_after_move(move, pieces.Piece.WHITE) else 0  # Ưu tiên chiếu tướng
+        ))
+        
+        best_move = None
         best_score = AI.INFINITE
-        for move in chessboard.get_possible_moves(pieces.Piece.BLACK):
-            if (AI.is_invalid_move(move, invalid_moves)):
+        
+        for move in possible_moves:
+            if AI.is_invalid_move(move, invalid_moves):
                 continue
-
+                
             copy = board.Board.clone(chessboard)
             copy.perform_move(move)
-
-            score = AI.alphabeta(copy, 2, -AI.INFINITE, AI.INFINITE, True)
-            if (score < best_score):
+            
+            # Tăng depth từ 2 lên 4
+            score = AI.alphabeta(copy, 4, -AI.INFINITE, AI.INFINITE, True)
+            
+            if score < best_score:
                 best_score = score
                 best_move = move
-
-        # Checkmate.
-        if (best_move == 0):
+        
+        if best_move is None:  # Checkmate hoặc hết nước
             return 0
-
+        
+        # Kiểm tra nước đi có an toàn không
         copy = board.Board.clone(chessboard)
         copy.perform_move(best_move)
-        if (copy.is_check(pieces.Piece.BLACK)):
+        if copy.is_check(pieces.Piece.BLACK):
             invalid_moves.append(best_move)
             return AI.get_ai_move(chessboard, invalid_moves)
-
+        
         return best_move
 
     @staticmethod
