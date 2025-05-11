@@ -139,7 +139,7 @@ class AI:
             # Kiểm tra chiếu tướng sau khi đi
             is_check = copy.is_check(pieces.Piece.WHITE)
             
-            score = AI.alphabeta(copy, 3, -AI.INFINITE, AI.INFINITE, True)
+            score = AI.alphabeta(copy, 2, -AI.INFINITE, AI.INFINITE, True)
             
             # Thêm điểm ưu tiên nếu chiếu tướng
             if is_check:
