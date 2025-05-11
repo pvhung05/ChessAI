@@ -7,6 +7,14 @@ import ai
 from move import Move
 import math
 from button import Button
+import tkinter as tk
+from tkinter import filedialog
+
+import ai_opponent
+
+# Biến toàn cục lưu đường dẫn engine
+engine_path = None
+ai_compete = True  # Biến toàn cục để xác định chế độ chơi (AI vs AI hay người vs AI)
 
 # Khởi tạo Pygame
 pygame.init()
@@ -148,6 +156,76 @@ def animate_move(chessboard, move, piece):
 
     chessboard.perform_move(move)
 
+#mot so ham ho tro lay ai dau voi nhau
+def get_fen(self, active_color="w"):
+    fen = ""
+    for y in range(Board.HEIGHT - 1, -1, -1):  # Lặp từ hàng 8 đến hàng 1
+        empty_count = 0
+        for x in range(Board.WIDTH):  # Lặp qua các cột
+            piece = self.chesspieces[x][y]
+            if piece == 0:  # Nếu là ô trống
+                empty_count += 1
+            else:
+                if empty_count > 0:  # Nếu có ô trống trước đó
+                    fen += str(empty_count)
+                    empty_count = 0
+                symbol = piece.to_string()[1]  # Lấy ký hiệu của quân cờ
+                if piece.to_string()[0] == "B":  # Nếu là quân đen
+                    symbol = symbol.lower()  # Đổi ký hiệu thành chữ thường
+                fen += symbol
+        if empty_count > 0:  # Nếu có ô trống còn lại
+            fen += str(empty_count)
+        if y > 0:
+            fen += "/"  # Phân cách các hàng
+
+    # Lượt đi (w hoặc b)
+    fen += " " + ("w" if active_color == "w" else "b")
+
+    return self.reverse_fen(fen)
+
+def reverse_fen(self,fen):
+    # Tách chuỗi FEN thành các phần
+    parts = fen.split(' ')
+    
+    # Lấy phần bàn cờ (trạng thái của bàn cờ)
+    board_state = parts[0]
+    
+    # Đảo ngược thứ tự các hàng quân cờ
+    reversed_board_state = "/".join(reversed(board_state.split('/')))
+    
+    # Lưu lại phần còn lại của FEN (lượt đi, castling, en passant, số nước đi, số lượt chơi)
+    rest_of_fen = ' '.join(parts[1:])
+    
+    # Kết hợp lại thành chuỗi FEN mới
+    reversed_fen = reversed_board_state + ' ' + rest_of_fen
+    return reversed_fen
+
+def coordinateMoveConvert(ai_enemy_move):
+    from_square = ai_enemy_move[:2]
+    to_square = ai_enemy_move[2:4]
+
+    print(from_square)
+    print(to_square)
+
+    row = {
+    "a": 0,
+    "b": 1,
+    "c": 2,
+    "d": 3,
+    "e": 4,
+    "f": 5,
+    "g": 6,
+    "h": 7
+    }
+  
+
+    s_x_from = row[from_square[0]]
+    s_y_from = 8 - int(from_square[1])
+    s_x_to = row[to_square[0]]  # Cột (file)
+    s_y_to = 8 - int(to_square[1])  # Hàng (rank)
+
+    return s_x_from, s_y_from, s_x_to, s_y_to
+
 #Hàm game_over
 def game_over_screen(text):
     font_big = get_font(45)
@@ -185,6 +263,8 @@ def game_over_screen(text):
         pygame.display.update()
         clock.tick(FPS)
 def menu():
+    global engine_path
+    global ai_compete  # Sử dụng biến toàn cục để lưu đường dẫn engine
     while True:
         screen.blit(BG, (0, 0))
         # Lấy vị trí con chuột
@@ -208,7 +288,14 @@ def menu():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if(PLAY_BUTTON.checkForInput(MENU_MOUSE_POS)):
                     click_sound.play()
+                    if not engine_path:
+                        ai_compete = False
                     main()
+
+                if(OPTION_BUTTON.checkForInput(MENU_MOUSE_POS)):
+                    click_sound.play()
+                    option_menu()
+
                 if(QUIT_BUTTON.checkForInput(MENU_MOUSE_POS)):
                     click_sound.play()
                     pygame.quit()
@@ -218,20 +305,129 @@ def menu():
         clock.tick(FPS)
         pygame.display.update()
 
+#ham lua chon menu option
+def option_menu():
+    global engine_path  # Sử dụng biến toàn cục để lưu đường dẫn engine
+    global ai_compete  # Sử dụng biến toàn cục để xác định chế độ chơi
+
+    selected_option = None
+    while True:
+        # Hiển thị background
+        screen.blit(BG, (0, 0))
+        
+        font = get_font(30)
+        title = font.render("Options", True, WHITE)
+        screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 100))
+
+        # Radio buttons
+        OPTION_1 = Button(image=None, pos=(WIDTH // 2, 250), text_input="AI Vs AI",
+                          font=get_font(25), base_color="white", hovering_color="yellow")
+        OPTION_2 = Button(image=None, pos=(WIDTH // 2, 350), text_input="Player Vs AI",
+                          font=get_font(25), base_color="white", hovering_color="yellow")
+        BACK_BUTTON = Button(image=None, pos=(WIDTH // 2, 500), text_input="BACK",
+                             font=get_font(25), base_color="white", hovering_color="yellow")
+
+        mouse_pos = pygame.mouse.get_pos()
+
+        for button in [OPTION_1, OPTION_2, BACK_BUTTON]:
+            button.changeColor(mouse_pos)
+            button.update(screen)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if OPTION_1.checkForInput(mouse_pos):
+                    click_sound.play()
+                    selected_option = "ai"
+                    print("Selected Option: AI Vs AI")
+                    
+                    # Kiểm tra đường dẫn engine
+                    if not engine_path:
+                        print("Engine path not set. Please select the engine file.")
+                        root = tk.Tk()
+                        root.withdraw()  # Ẩn cửa sổ chính của tkinter
+                        engine_path = filedialog.askopenfilename(title="Select AI Engine",
+                                                                 filetypes=[("Executable Files", "*.exe")])
+                        if engine_path:
+                            print(f"Engine path set to: {engine_path}")
+
+                            ai_compete = True  # Chế độ AI vs AI
+                        else:
+                            print("No engine selected. Returning to options menu.")
+                            selected_option = None  # Reset lựa chọn nếu không chọn file
+
+                if OPTION_2.checkForInput(mouse_pos):
+                    click_sound.play()
+                    selected_option = "human"
+                    ai_compete = False  # Chế độ người vs AI
+                    engine_path = None  # Đặt lại đường dẫn engine
+                    print("Selected Option: Player Vs AI")
+                if BACK_BUTTON.checkForInput(mouse_pos):
+                    click_sound.play()
+                    return  # Quay lại menu chính
+
+        # Hiển thị lựa chọn đã chọn
+        if selected_option:
+            selected_text = font.render(f"Selected: {selected_option}", True, WHITE)
+            screen.blit(selected_text, (WIDTH // 2 - selected_text.get_width() // 2, 400))
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
 # Hàm main
 def main():
+    global engine_path
+    global ai_compete
+
     chessboard = board.Board.new()
     running = True
     selected = None
     possible_moves = None
     game_over = False
-    result_text = ""
+    result_text = "" 
 
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN and not game_over:
+
+            elif not game_over and ai_compete:
+                #hmodel
+                #rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w
+                print(chessboard.get_fen('w'))
+                #ai enemy
+                ai_enemy = ai_opponent.OpponentAI(engine_path, time_limit=0.1)
+                ai_enemy_move=ai_enemy.get_best_move(chessboard.get_fen('w'))
+                print(ai_enemy_move)
+                s_x_from, s_y_from, s_x_to, s_y_to = coordinateMoveConvert(ai_enemy_move.uci())
+                moving_piece_stkfish = chessboard.get_piece(s_x_from, s_y_from)
+                print(moving_piece_stkfish)
+                s_move = Move( s_x_from, s_y_from, s_x_to, s_y_to)           
+                animate_move(chessboard, s_move, moving_piece_stkfish)
+                print(f"ai enemy move ({s_x_from},{s_y_from}) -> ({s_x_to},{s_y_to})")
+                #chessboard.perform_move(s_move)
+                ai_enemy.quit()                     
+                # #our model
+                ai_move = ai.AI.get_ai_move(chessboard, [])
+                if ai_move == 0:
+                    if chessboard.is_check(pieces.Piece.BLACK):
+                        print("Checkmate. White wins.")
+                    else:
+                        print("Stalemate.")
+                    game_over = True
+                else:
+                    moving_piece = chessboard.get_piece(ai_move.xfrom, ai_move.yfrom)
+                    animate_move(chessboard, ai_move, moving_piece)
+                    print("AI move: " + ai_move.to_string())
+                        #in ra chuoi fern may di
+                    print(chessboard.get_fen('b'))
+                if is_king_captured(chessboard, pieces.Piece.WHITE):
+                    print("Checkmate! Black wins.")
+                    game_over = True
+
+            elif event.type == pygame.MOUSEBUTTONDOWN and not game_over and not ai_compete:
                 x, y = event.pos
                 col, row = x // SQUARE_SIZE, y // SQUARE_SIZE
                 print(f"Clicked at ({col}, {row})")

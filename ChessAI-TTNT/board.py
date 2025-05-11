@@ -158,3 +158,45 @@ class Board:
     #                 string += ".. "
     #         string += "\n"
     #     return string + "\n"
+    def get_fen(self, active_color="w"):
+        fen = ""
+        for y in range(Board.HEIGHT - 1, -1, -1):  # Lặp từ hàng 8 đến hàng 1
+            empty_count = 0
+            for x in range(Board.WIDTH):  # Lặp qua các cột
+                piece = self.chesspieces[x][y]
+                if piece == 0:  # Nếu là ô trống
+                    empty_count += 1
+                else:
+                    if empty_count > 0:  # Nếu có ô trống trước đó
+                        fen += str(empty_count)
+                        empty_count = 0
+                    symbol = piece.to_string()[1]  # Lấy ký hiệu của quân cờ
+                    if piece.to_string()[0] == "B":  # Nếu là quân đen
+                        symbol = symbol.lower()  # Đổi ký hiệu thành chữ thường
+                    fen += symbol
+            if empty_count > 0:  # Nếu có ô trống còn lại
+                fen += str(empty_count)
+            if y > 0:
+                fen += "/"  # Phân cách các hàng
+
+        # Lượt đi (w hoặc b)
+        fen += " " + ("w" if active_color == "w" else "b")
+
+        return self.reverse_fen(fen)
+
+    def reverse_fen(self,fen):
+        # Tách chuỗi FEN thành các phần
+        parts = fen.split(' ')
+        
+        # Lấy phần bàn cờ (trạng thái của bàn cờ)
+        board_state = parts[0]
+        
+        # Đảo ngược thứ tự các hàng quân cờ
+        reversed_board_state = "/".join(reversed(board_state.split('/')))
+        
+        # Lưu lại phần còn lại của FEN (lượt đi, castling, en passant, số nước đi, số lượt chơi)
+        rest_of_fen = ' '.join(parts[1:])
+        
+        # Kết hợp lại thành chuỗi FEN mới
+        reversed_fen = reversed_board_state + ' ' + rest_of_fen
+        return reversed_fen
