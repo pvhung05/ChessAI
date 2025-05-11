@@ -107,17 +107,19 @@ class Heuristics:
 
 
 class AI:
-
     INFINITE = 10000000
 
     @staticmethod
     def get_ai_move(chessboard, invalid_moves):
         possible_moves = chessboard.get_possible_moves(pieces.Piece.BLACK)
         
-        # Sắp xếp nước đi theo heuristic (ăn quân, chiếu tướng ưu tiên trước)
+        if not possible_moves:  # Nếu không có nước đi hợp lệ
+            return 0
+        
+        # Sắp xếp nước đi theo heuristic (ưu tiên ăn quân có giá trị cao)
         possible_moves.sort(key=lambda move: (
-            -1 if move.captured_piece else 0,  # Ưu tiên nước ăn quân
-            -1 if chessboard.is_check_after_move(move, pieces.Piece.WHITE) else 0  # Ưu tiên chiếu tướng
+            -move.captured_piece.value if move.captured_piece else 0,
+            0  # Đã bỏ điều kiện kiểm tra chiếu tướng ở đây
         ))
         
         best_move = None
@@ -127,11 +129,18 @@ class AI:
             if AI.is_invalid_move(move, invalid_moves):
                 continue
                 
+            # Tạo bản sao và kiểm tra
             copy = board.Board.clone(chessboard)
             copy.perform_move(move)
             
-            # Tăng depth từ 2 lên 4
-            score = AI.alphabeta(copy, 4, -AI.INFINITE, AI.INFINITE, True)
+            # Kiểm tra chiếu tướng sau khi đi
+            is_check = copy.is_check(pieces.Piece.WHITE)
+            
+            score = AI.alphabeta(copy, 3, -AI.INFINITE, AI.INFINITE, True)
+            
+            # Thêm điểm ưu tiên nếu chiếu tướng
+            if is_check:
+                score -= 50  # Giảm score (vì AI đang chơi quân đen và đang minimize)
             
             if score < best_score:
                 best_score = score
