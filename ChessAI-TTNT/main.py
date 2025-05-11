@@ -9,6 +9,7 @@ import math
 from button import Button
 import tkinter as tk
 from tkinter import filedialog
+import threading
 
 import ai_opponent
 
@@ -376,6 +377,7 @@ def option_menu():
         pygame.display.flip()
         clock.tick(FPS)
 
+
 # Hàm main
 def main():
     global engine_path
@@ -386,14 +388,20 @@ def main():
     selected = None
     possible_moves = None
     game_over = False
-    result_text = "" 
+    result_text = ""
+    ai_thread = None
+    ai_move_result = [None]  # Use a list to store the result from the thread
+
+    def compute_ai_move():
+        # Function to compute the AI move in a separate thread
+        ai_move_result[0] = ai.AI.get_ai_move(chessboard, [])
 
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
-            elif not game_over and ai_compete:
+            elif not game_over and ai_compete and ai_thread is None:
                 #hmodel
                 #rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w
                 print(chessboard.get_fen('w'))
@@ -409,29 +417,36 @@ def main():
                 print(f"ai enemy move ({s_x_from},{s_y_from}) -> ({s_x_to},{s_y_to})")
                 #chessboard.perform_move(s_move)
                 ai_enemy.quit()                     
-                # #our model
-                ai_move = ai.AI.get_ai_move(chessboard, [])
-                if ai_move == 0:
-                    if chessboard.is_check(pieces.Piece.BLACK):
-                        print("Checkmate. White wins.")
+                # Start the AI computation in a separate thread
+                ai_thread = threading.Thread(target=compute_ai_move)
+                ai_thread.start()
+
+            elif not game_over and ai_compete and ai_thread is not None:
+                # Check if the AI thread has finished
+                if not ai_thread.is_alive():
+                    ai_thread.join()  # Ensure the thread is cleaned up
+                    ai_thread = None  # Reset the thread
+                    ai_move = ai_move_result[0]
+                    if ai_move == 0:
+                        if chessboard.is_check(pieces.Piece.BLACK):
+                            print("Checkmate. White wins.")
+                        else:
+                            print("Stalemate.")
+                        game_over = True
                     else:
-                        print("Stalemate.")
-                    game_over = True
-                else:
-                    moving_piece = chessboard.get_piece(ai_move.xfrom, ai_move.yfrom)
-                    animate_move(chessboard, ai_move, moving_piece)
-                    print("AI move: " + ai_move.to_string())
-                        #in ra chuoi fern may di
-                    print(chessboard.get_fen('b'))
-                if is_king_captured(chessboard, pieces.Piece.WHITE):
-                    print("Checkmate! Black wins.")
-                    game_over = True
+                        moving_piece = chessboard.get_piece(ai_move.xfrom, ai_move.yfrom)
+                        animate_move(chessboard, ai_move, moving_piece)
+                        print("AI move: " + ai_move.to_string())
+                        print(chessboard.get_fen('b'))
+                    if is_king_captured(chessboard, pieces.Piece.WHITE):
+                        print("Checkmate! Black wins.")
+                        game_over = True
 
             elif event.type == pygame.MOUSEBUTTONDOWN and not game_over and not ai_compete:
                 x, y = event.pos
                 col, row = x // SQUARE_SIZE, y // SQUARE_SIZE
                 print(f"Clicked at ({col}, {row})")
-                
+
                 if selected is None:
                     piece = chessboard.get_piece(col, row)
                     if piece != 0 and piece.color == pieces.Piece.WHITE:
@@ -457,7 +472,7 @@ def main():
                                     print("Checkmate! White wins.")
                                     game_over = True
                                     win_sound.play()
-                                    break   
+                                    break
 
                                 ai_move = ai.AI.get_ai_move(chessboard, [])
                                 if ai_move == 0:
@@ -466,32 +481,26 @@ def main():
                                     else:
                                         print("Stalemate.")
                                     game_over = True
-                                    win_sound.play()
                                 else:
                                     moving_piece = chessboard.get_piece(ai_move.xfrom, ai_move.yfrom)
                                     animate_move(chessboard, ai_move, moving_piece)
-                                    move_sound.play()
                                     print("AI move: " + ai_move.to_string())
+                                    print(chessboard.get_fen('b'))
 
-                                if is_king_captured(chessboard, pieces.Piece.WHITE):
-                                    result_text = "YOU LOSE"
-                                    loss_sound.play()
-                                    print("Checkmate! Black wins.")
-                                    game_over = True
                             except Exception as e:
                                 print(f"Error during move: {e}")
-                                running = False
                             break
                     else:
                         print("Invalid move, resetting selection.")
                         selected = None
                         possible_moves = None
-            if(game_over):
+            if game_over:
                 should_restart = game_over_screen(result_text)
-                if (should_restart == True):
+                if should_restart:
                     main()
-                elif (should_restart == False):
+                else:
                     menu()
+
         screen.fill(BLACK)
         draw_board(chessboard, selected, possible_moves)
         pygame.display.flip()
@@ -502,3 +511,4 @@ def main():
 
 if __name__ == "__main__":
     menu()
+    
