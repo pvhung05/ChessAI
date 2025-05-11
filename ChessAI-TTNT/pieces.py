@@ -15,9 +15,9 @@ class Piece():
 
 
 
-    # Returns all diagonal moves for this piece. This should therefore only
-    # be used by the Bishop and Queen since they are the only pieces that can
-    # move diagonally.
+    # Trả về tất cả các nước đi chéo cho quân cờ này. Do đó, điều này chỉ nên được
+    # Sử dụng bởi Tượng và Hậu vì chúng là những quân cờ duy nhất có thể
+    # Di chuyển theo đường chéo.
     def get_possible_diagonal_moves(self, board):
         moves = []
 
@@ -59,13 +59,13 @@ class Piece():
 
         return self.remove_null_from_list(moves)
 
-    # Returns all horizontal moves for this piece. This should therefore only
-    # be used by the Rooks and Queen since they are the only pieces that can
-    # move horizontally.
+    # Trả về tất cả các nước đi theo chiều ngang cho quân cờ này. Do đó, điều này chỉ nên được
+    # Sử dụng bởi Xe và Hậu vì chúng là những quân cờ duy nhất có thể
+    # Di chuyển theo chiều ngang.
     def get_possible_horizontal_moves(self, board):
         moves = []
 
-        # Moves to the right of the piece.
+        # Di chuyển sang bên phải của quân cờ.
         for i in range(1, 8 - self.x):
             piece = board.get_piece(self.x + i, self.y)
             moves.append(self.get_move(board, self.x+i, self.y))
@@ -73,21 +73,21 @@ class Piece():
             if (piece != 0):
                 break
 
-        # Moves to the left of the piece.
+        # Di chuyển sang bên trái của quân cờ.
         for i in range(1, self.x + 1):
             piece = board.get_piece(self.x - i, self.y)
             moves.append(self.get_move(board, self.x-i, self.y))
             if (piece != 0):
                 break
 
-        # Downward moves.
+        # Di chuyển xuống dưới.
         for i in range(1, 8 - self.y):
             piece = board.get_piece(self.x, self.y + i)
             moves.append(self.get_move(board, self.x, self.y+i))
             if (piece != 0):
                 break
 
-        # Upward moves.
+        # Di chuyển lên trên.
         for i in range(1, self.y + 1):
             piece = board.get_piece(self.x, self.y - i)
             moves.append(self.get_move(board, self.x, self.y-i))
@@ -96,10 +96,10 @@ class Piece():
 
         return self.remove_null_from_list(moves)
 
-    # Returns a Move object with (xfrom, yfrom) set to the piece current position.
-    # (xto, yto) is set to the given position. If the move is not valid 0 is returned.
-    # A move is not valid if it is out of bounds, or a piece of the same color is
-    # being eaten.
+    # Trả về một đối tượng Move với (xfrom, yfrom) được đặt thành vị trí hiện tại của quân cờ.
+    # (xto, yto) được đặt thành vị trí đã cho. Nếu nước đi không hợp lệ, 0 sẽ được trả về.
+    # Một nước đi không hợp lệ nếu nó nằm ngoài giới hạn hoặc một quân cờ cùng màu đang
+    # Bị ăn.
     def get_move(self, board, xto, yto):
         move = 0
         if (board.in_bounds(xto, yto)):
@@ -216,48 +216,48 @@ class King(Piece):
 
         return self.remove_null_from_list(moves)
 
-    # Only checks for castle kingside
+    # Chỉ kiểm tra lâu đài bên vua
     def get_castle_kingside_move(self, board):
-        # Are we looking at a valid rook
+        # Chúng ta đang nhìn vào một quân xe hợp lệ
         piece_in_corner = board.get_piece(self.x+3, self.y)
         if (piece_in_corner == 0 or piece_in_corner.piece_type != Rook.PIECE_TYPE):
             return 0
 
-        # If the rook in the corner is not our color we cannot castle (duh).
+        # Nếu quân xe ở góc không cùng màu với quân của mình thì chúng ta không thể nhập thành (điều hiển nhiên).
         if (piece_in_corner.color != self.color):
             return 0
         
-        # If the king has moved, we cannot castle
+        # Nếu vua đã di chuyển, chúng ta không thể nhập thành
         if (self.color == Piece.WHITE and board.white_king_moved):
             return 0
         
         if (self.color == Piece.BLACK and board.black_king_moved):
             return 0
 
-        # If there are pieces in between the king and rook we cannot castle
+        # Nếu có quân cờ ở giữa vua và xe thì chúng ta không thể nhập thành
         if (board.get_piece(self.x+1, self.y) != 0 or board.get_piece(self.x+2, self.y) != 0):
             return 0
         
         return Move(self.x, self.y, self.x+2, self.y)
 
     def get_castle_queenside_move(self, board):
-        # Are we looking at a valid rook
+        # Chúng ta đang nhìn vào một quân xe hợp lệ
         piece_in_corner = board.get_piece(self.x-4, self.y)
         if (piece_in_corner == 0 or piece_in_corner.piece_type != Rook.PIECE_TYPE):
             return 0
 
-        # If the rook in the corner is not our color we cannot castle (duh).
+        # Nếu quân xe ở góc không cùng màu với quân của mình thì chúng ta không thể nhập thành (điều hiển nhiên).
         if (piece_in_corner.color != self.color):
             return 0
         
-        # If the king has moved, we cannot castle
+        # Nếu vua đã di chuyển, chúng ta không thể nhập thành
         if (self.color == Piece.WHITE and board.white_king_moved):
             return 0
         
         if (self.color == Piece.BLACK and board.black_king_moved):
             return 0
 
-        # If there are pieces in between the king and rook we cannot castle
+        # Nếu có quân cờ ở giữa vua và xe thì chúng ta không thể nhập thành
         if (board.get_piece(self.x-1, self.y) != 0 or board.get_piece(self.x-2, self.y) != 0 or board.get_piece(self.x-3, self.y) != 0):
             return 0
         

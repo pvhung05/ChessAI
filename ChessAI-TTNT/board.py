@@ -71,7 +71,7 @@ class Board:
         piece = self.chesspieces[move.xfrom][move.yfrom]
         self.move_piece(piece, move.xto, move.yto)
 
-        # Xử lý bắt qua đường
+        # Xử lý bắt tốt qua đường
         if piece.piece_type == pieces.Pawn.PIECE_TYPE:
             # Kiểm tra di chuyển 2 ô của tốt
             if abs(move.yto - move.yfrom) == 2:
@@ -113,7 +113,7 @@ class Board:
         self.chesspieces[xto][yto] = piece
 
 
-    # Returns if the given color is checked.
+    # Trả về nếu màu đã cho được kiểm tra.
     def is_check(self, color):
         other_color = pieces.Piece.WHITE
         if (color == pieces.Piece.WHITE):

@@ -2,7 +2,7 @@ import board, pieces, numpy
 
 class Heuristics:
 
-    # The tables denote the points scored for the position of the chess pieces on the board.
+    # Các bảng biểu thị số điểm ghi được cho vị trí của các quân cờ trên bàn cờ.
 
     PAWN_TABLE = numpy.array([
         [ 0,  0,  0,  0,  0,  0,  0,  0],
@@ -71,9 +71,9 @@ class Heuristics:
 
         return material + pawns + knights + bishops + rooks + queens
 
-    # Returns the score for the position of the given type of piece.
-    # A piece type can for example be: pieces.Pawn.PIECE_TYPE.
-    # The table is the 2d numpy array used for the scoring. Example: Heuristics.PAWN_TABLE
+    # Trả về điểm cho vị trí của loại quân cờ đã cho.
+    # Ví dụ, loại quân cờ có thể là: pieces.Pawn.PIECE_TYPE.
+    # Bảng là mảng numpy 2 chiều được sử dụng để tính điểm. Ví dụ: Heuristics.PAWN_TABLE
     @staticmethod
     def get_piece_position_score(board, piece_type, table):
         white = 0
